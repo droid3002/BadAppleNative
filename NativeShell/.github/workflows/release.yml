@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+        
+  release:
+    needs: build
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref }}
+          body: NT native executable and install files
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Download i386 binary 
+        uses: actions/download-artifact@v4
+        with:
+          name: nativeshell-i386
+          path: ${{ github.workspace }}/i386
+      - name: Prepare release i386 binary
+        working-directory: ${{ github.workspace }}/i386
+        run: zip -r --junk-paths nativeshell.zip ./*
+      - name: Release i386 binary 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/i386/nativeshell.zip
+          asset_name: nativeshell-${{ github.ref_name }}.i386.zip
+          asset_content_type: application/zip
+      - name: Download amd64 binary 
+        uses: actions/download-artifact@v4
+        with:
+          name: nativeshell-amd64
+          path: ${{ github.workspace }}/amd64
+      - name: Prepare release amd64 binary
+        working-directory: ${{ github.workspace }}/amd64
+        run: zip -r --junk-paths nativeshell.zip ./*
+      - name: Release amd64 binary 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/amd64/nativeshell.zip
+          asset_name: nativeshell-${{ github.ref_name }}.amd64.zip
+          asset_content_type: application/zip
+    

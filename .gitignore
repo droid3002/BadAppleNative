@@ -1,0 +1,16 @@
+# Build artifacts
+*.o
+*.exe
+*.sys
+
+# Data files (generate from bad.mp4 using tools/convert.py)
+NativeShell/badapple.dat
+NativeShell/badapple_audio.dat
+NativeShell/BadAppleAudio.sys
+NativeShell/native.exe
+NativeShell/BadAppleAudio.sys
+
+# Junk
+edfgrs
+trh.zip
+*.zip

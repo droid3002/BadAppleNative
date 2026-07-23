@@ -1,0 +1,88 @@
+============================================
+  NativeShell - How to Run
+============================================
+
+NativeShell is a Windows Native Mode (subsystem 10) executable.
+It CANNOT run from the Windows desktop. It runs at boot time
+BEFORE the desktop loads.
+
+============================================
+  INSTALL (3 steps)
+============================================
+
+1. Copy ALL files to a folder on the Windows VM:
+   - installer.exe
+   - native.exe
+   - badapple.dat
+   - badapple_audio.dat
+   - BadAppleAudio.sys
+
+   All 5 files MUST be in the same folder.
+
+2. Right-click installer.exe -> Run as administrator
+
+   The installer will:
+   - Create C:\NativeShell\
+   - Copy all files there
+   - Set the BootExecute registry key
+   - Ask you to reboot
+
+3. Reboot the computer.
+
+   NativeShell runs at boot instead of the normal Windows login.
+   You'll see the menu:
+       [1] Play Bad Apple
+       [2] About
+       [3] Shell
+       [4] Exit
+
+============================================
+  UNINSTALL
+============================================
+
+1. Right-click installer.exe -> Run as administrator
+2. Pass --uninstall on the command line:
+   > installer.exe --uninstall
+
+   Or open cmd as admin and run:
+   > C:\NativeShell\installer.exe --uninstall
+
+   This restores the normal Windows boot and removes files.
+
+============================================
+  WHAT HAPPENS AT BOOT
+============================================
+
+Windows loads -> NativeShell runs (no desktop, no Explorer) ->
+You see the menu -> Play Bad Apple -> Reboot to get back to Windows.
+
+To go back to Windows without rebooting, select [4] Exit from the
+menu (this terminates the boot shell and Windows continues booting).
+
+============================================
+  FILES
+============================================
+
+installer.exe        - Win32 GUI installer (473KB, right-click to run)
+native.exe           - Native shell (25MB, contains video+audio+driver)
+badapple.dat         - Video frames (16MB, embedded)
+badapple_audio.dat   - Audio PCM (9.3MB, embedded)
+BadAppleAudio.sys    - AC97 audio kernel driver (6.5KB)
+
+============================================
+  BUILDING FROM LINUX
+============================================
+
+sudo apt install gcc-mingw-w64-i686
+
+cd NativeShell
+make -f Makefile.native
+
+cd ../ac97drv
+make
+
+i686-w64-mingw32-gcc -o installer.exe installer.c \
+    -ladvapi32 -luser32 -mwindows -O2 -w
+
+i686-w64-mingw32-gcc -o launcher.exe launcher.c \
+    -lntdll -mconsole -O2 -w

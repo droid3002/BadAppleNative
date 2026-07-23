@@ -1,0 +1,51 @@
+;
+; BadAppleAudio.inf
+;
+; Driver installation file for the BadAppleAudio AC97 driver.
+; Used by NativeShell to play audio through the AC97 codec.
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=Media
+ClassGuid={4d36e96c-e325-11ce-bfc1-08002be10318}
+Provider=%ManufacturerName%
+DriverVer=07/22/2026,1.0.0.0
+CatalogFile=BadAppleAudio.cat
+
+[Manufacturer]
+%ManufacturerName%=Standard,NTx86
+
+[Standard.NTx86]
+%BadAppleAudio.DeviceDesc%=BadAppleAudio.Device, root\BadAppleAudio
+
+[BadAppleAudio.Device.NT]
+CopyFiles=BadAppleAudio.CopyDriver
+AddReg=BadAppleAudio.AddReg
+
+[BadAppleAudio.CopyDriver]
+BadAppleAudio.sys
+
+[BadAppleAudio.Device.NT.Services]
+AddService=BadAppleAudio,0x00000002,BadAppleAudio.Service
+
+[BadAppleAudio.Service]
+DisplayName=%BadAppleAudio.ServiceDesc%
+ServiceType=1
+StartType=3
+ErrorControl=1
+ServiceBinary=%12%\BadAppleAudio.sys
+
+[BadAppleAudio.AddReg]
+HKR,,CLSID,,%Proxy.CLSID%
+
+DestinationDirs=DefaultDestDir
+
+[DefaultDestDir]
+12
+
+[Strings]
+ManufacturerName="Droid3002"
+BadAppleAudio.DeviceDesc="BadAppleAudio AC97 PCM Playback Driver"
+BadAppleAudio.ServiceDesc="BadAppleAudio Driver"
+Proxy.CLSID="{00000000-0000-0000-0000-000000000000}"

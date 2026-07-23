@@ -1,0 +1,66 @@
+# Makefile for NativeShell - Native subsystem build
+# Produces a true Windows Native Mode executable.
+# Links ONLY against ntdll.dll - no kernel32, no msvcrt.
+#
+# Usage: make -f Makefile.native
+
+CC = i686-w64-mingw32-gcc
+STRIP = i686-w64-mingw32-strip
+
+CFLAGS = -I./ndk -D_EXCEPTION_REGISTRATION_RECORD_DEFINED -D_NATIVE_MODE \
+         -D_INC_STRING -D_INC_MBSTRING \
+         -O2 -w -fno-builtin -fcommon \
+         -ffreestanding -nostdlib
+
+LDFLAGS = -Wl,--subsystem,native -Wl,--entry,_NtProcessStartup \
+          -Wl,--no-undefined -lntdll -lgcc -nostartfiles
+
+SOURCES = display.c file.c gfx.c hardware.c input.c main.c \
+          sysinfo.c keytrans.c shell.c process.c ntfile.c ntreg.c \
+          video.c nativertl.c audio.c
+
+OBJECTS = $(SOURCES:.c=.o)
+
+TARGET = native.exe
+
+all: $(TARGET)
+
+# Ensure driver is built first
+$(TARGET): ../ac97drv/BadAppleAudio.sys
+
+# Build the audio driver if needed
+../ac97drv/BadAppleAudio.sys:
+	$(MAKE) -C ../ac97drv
+
+# Embed badapple.dat as a read-only PE data object
+badapple_dat.o: badapple.dat
+	i686-w64-mingw32-objcopy -I binary -O pe-i386 \
+	  --rename-section .data=.rdata,alloc,load,readonly,content \
+	  -B i386 $< $@
+
+# Embed badapple_audio.dat as a read-only PE data object
+badapple_audio_dat.o: badapple_audio.dat
+	i686-w64-mingw32-objcopy -I binary -O pe-i386 \
+	  --rename-section .data=.rdata,alloc,load,readonly,content \
+	  -B i386 $< $@
+
+# Embed BadAppleAudio.sys as a read-only PE data object
+BadAppleAudio_sys.o: ../ac97drv/BadAppleAudio.sys
+	cp $< BadAppleAudio.sys
+	i686-w64-mingw32-objcopy -I binary -O pe-i386 \
+	  --rename-section .data=.rdata,alloc,load,readonly,content \
+	  -B i386 BadAppleAudio.sys $@
+
+%.o: %.c precomp.h audio.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJECTS) badapple_dat.o badapple_audio_dat.o BadAppleAudio_sys.o
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) badapple_dat.o badapple_audio_dat.o BadAppleAudio_sys.o $(LDFLAGS)
+	$(STRIP) $@
+	@echo "Build complete: $(TARGET)"
+	@ls -lh $@
+
+clean:
+	rm -f $(OBJECTS) badapple_dat.o badapple_audio_dat.o BadAppleAudio_sys.o $(TARGET)
+
+.PHONY: all clean

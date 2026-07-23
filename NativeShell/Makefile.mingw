@@ -1,0 +1,39 @@
+# Makefile for NativeShell - cross-compiled with MinGW on Linux
+# Usage: make -f Makefile.mingw
+
+CC = i686-w64-mingw32-gcc
+STRIP = i686-w64-mingw32-strip
+
+CFLAGS = -I./ndk -D_EXCEPTION_REGISTRATION_RECORD_DEFINED \
+         -O2 -w -fno-builtin -fcommon
+
+LDFLAGS = -mconsole -lntdll
+
+SOURCES = display.c file.c gfx.c hardware.c input.c main.c \
+          sysinfo.c keytrans.c shell.c process.c ntfile.c ntreg.c video.c
+
+OBJECTS = $(SOURCES:.c=.o)
+
+TARGET = native.exe
+
+all: $(TARGET)
+
+# Embed badapple.dat as a read-only PE data object
+badapple_dat.o: badapple.dat
+	i686-w64-mingw32-objcopy -I binary -O pe-i386 \
+	  --rename-section .data=.rdata,alloc,load,readonly,content \
+	  -B i386 $< $@
+
+%.o: %.c precomp.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(TARGET): $(OBJECTS) badapple_dat.o
+	$(CC) $(CFLAGS) -o $@ $(OBJECTS) badapple_dat.o $(LDFLAGS)
+	$(STRIP) $@
+	@echo "Build complete: $(TARGET)"
+	@ls -lh $@
+
+clean:
+	rm -f $(OBJECTS) badapple_dat.o $(TARGET)
+
+.PHONY: all clean
